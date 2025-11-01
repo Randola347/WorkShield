@@ -1,5 +1,4 @@
 <?php
-
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\EmployeeController;
@@ -36,4 +35,9 @@ Route::get('/', function () {
     return redirect('/login');
 });
 
+// 🔓 Ruta vulnerable — acceso público a empleados
+
+Route::get('/public/employees/{id}', [EmployeeController::class, 'publicShow']);
+
 require __DIR__ . '/auth.php';
+

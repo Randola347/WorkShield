@@ -1,59 +1,157 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# WorkShield 
+**Proyecto:** WorkShield (404 Bros Found)  
+**Curso:** ITI-922 — Seguridad de TI II  
+**Integrante:** Randall Madrigal Pérez y Cristopher Matus Salas
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+---
 
-## About Laravel
+## 1. Descripción del proyecto
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Propósito de la aplicación
+WorkShield es una aplicación web desarrollada para prácticas de seguridad informática y gestión de RRHH. Permite gestionar empleados (crear, listar, ver detalle, editar, eliminar). El objetivo de este repositorio es servir como **proyecto de prueba** para implementar, explotar y documentar vulnerabilidades OWASP con fines educativos.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Tecnologías utilizadas
+- **Framework:** Laravel 11 (PHP 8.4)  
+- **Frontend:** Blade templates + Bootstrap 5 (responsive) + JavaScript  
+- **Base de datos:** MySQL 8  
+- **Servidor de desarrollo:** php artisan serve (http://127.0.0.1:8000)  
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Arquitectura general
+Aplicación MVC (Models, Views, Controllers) típica de Laravel:
+- `app/Models` → Modelos Eloquent (Employee, Role, Payment, Audit, User).  
+- `app/Http/Controllers` → Lógica CRUD y endpoints.  
+- `resources/views` → Vistas Blade (UI en español).  
+- `database/migrations` y `database/seeders` → Estructura y datos iniciales.
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## 2. Instrucciones de despliegue
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Requisitos previos
+- PHP >= 8.4  
+- Composer >= 2.0 
+- MySQL >= 8.0   
+- Git
 
-## Laravel Sponsors
+### Pasos detallados de instalación
+1. Clonar el repositorio:
+   ```bash
+   git clone https://github.com/Randola347/WorkShield.git
+   cd workshield
+````
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+2. Instalar dependencias PHP:
 
-### Premium Partners
+   ```bash
+   composer install
+   ```
+3. Copiar el archivo de entorno y generar key:
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+4. Configurar `.env` con los datos de la base de datos:
 
-## Contributing
+   ```
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=workshield
+   DB_USERNAME=root
+   DB_PASSWORD=
+   ```
+5. Ejecutar migraciones y seeders (opcional: use el seeder de laboratorio si existe):
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+   ```bash
+   php artisan migrate
+   php artisan db:seed --class=CostaRicaEmployeeSeeder
+   ```
+6. Iniciar servidor local:
 
-## Code of Conduct
+   ```bash
+   php artisan serve
+   ```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+   Abre: `http://127.0.0.1:8000`
 
-## Security Vulnerabilities
+### Configuración de base de datos
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+* Las migraciones crean las tablas principales: `users`, `employees`, `roles`, `payments`, `audits`.
 
-## License
+---
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## 3. Catálogo de vulnerabilidades
+
+### Vulnerabilidad 1 — IDOR (Insecure Direct Object Reference)
+
+* **Nombre:** IDOR (Insecure Direct Object Reference)
+* **Clasificación OWASP:** A01:2021 — Broken Access Control
+
+#### i. Descripción técnica
+
+Se añadió un endpoint público que devuelve la vista de detalles de un empleado sin aplicar autenticación ni verificación de permisos. Cualquiera que conozca o pruebe diferentes valores del parámetro `{id}` puede enumerar y visualizar registros de empleados (incluyendo datos sensibles como salario y cuenta bancaria). Esto constituye **Broken Access Control** porque el acceso a recursos no está restringido por ownership o roles.
+
+#### ii. Ubicación en el código
+
+* **Ruta vulnerable:** `routes/web.php`
+  * Archivo: `routes/web.php`
+  * Linea 40: Route::get('/public/employees/{id}', [EmployeeController::class, 'publicShow']);
+* **Controlador:** `app/Http/Controllers/EmployeeController.php`
+
+  * Método: `publicShow($id)`
+  * Fragmento relevante (aprox. ubicación dentro del archivo):
+
+    ```php
+    public function publicShow($id)
+{
+    $employee = \App\Models\Employee::findOrFail($id);
+
+    return view('employees.show', compact('employee'));
+}
+
+    ```
+  
+#### Pasos detallados para explotar la vulnerabilidad
+
+**Precondición:** servidor en ejecución en `http://127.0.0.1:8000`.
+
+1. Abre el navegador (o usa `curl`).
+2. Abrir la URL del endpoint con un id válido:
+
+   ```
+   http://127.0.0.1:8000/public/employees/6
+   ```
+3. Si la página muestra la ficha del empleado sin pedir login → vulnerabilidad reproducida.
+4. Cambia el `{id}` por otros valores para enumerar registros:
+
+   ```
+   http://127.0.0.1:8000/public/employees/2
+   http://127.0.0.1:8000/public/employees/3
+   ```
+
+
+#### iv. Evidencia (qué capturar)
+
+* Captura de pantalla de `/public/employees/6` mostrando campos: nombre, correo, teléfono, salario, cuenta bancaria, notas.
+![IDOR](./images/captura1.png)
+
+#### v. Impacto
+
+* Exposición de datos personales y financieros de empleados.
+* Posibilidad de enumerar registros y extraer información confidencial.
+* Base para ataques posteriores (ingeniería social, fraudes, etc.).
+
+---
+
+## 4. Contribuciones del equipo
+
+### Distribución de tareas
+
+* **Randall Madrigal Pérez** — 
+* **Cristhofer Matus Salas** — 
+### Estadísticas de commits por integrante
+
+* Randall Madrigal Pérez —
+* Cristhofer Matus Salas — 
+---
