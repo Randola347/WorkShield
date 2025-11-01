@@ -23,15 +23,12 @@ class Employee extends Model
         'role_id',
     ];
 
-    // Relación con rol
-    public function role()
+    /**
+     * Accessor para mostrar el nombre completo del empleado
+     * compatible con {{ $employee->full_name }} en las vistas.
+     */
+    public function getFullNameAttribute()
     {
-        return $this->belongsTo(Role::class);
-    }
-
-    // Relación con pagos
-    public function payments()
-    {
-        return $this->hasMany(Payment::class);
+        return trim("{$this->first_name} {$this->last_name}");
     }
 }
