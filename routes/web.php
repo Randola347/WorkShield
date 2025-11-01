@@ -1,7 +1,9 @@
 <?php
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\PaymentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,6 +15,7 @@ use App\Http\Controllers\EmployeeController;
 Route::get('/', function () {
     return redirect()->route('dashboard');
 });
+
 
 // Dashboard principal
 Route::get('/dashboard', function () {
@@ -35,9 +38,10 @@ Route::get('/', function () {
     return redirect('/login');
 });
 
-// 🔓 Ruta vulnerable — acceso público a empleados
-
 Route::get('/public/employees/{id}', [EmployeeController::class, 'publicShow']);
 
-require __DIR__ . '/auth.php';
+// 🧾 Módulo de Pagos
+Route::resource('payments', PaymentController::class);
 
+
+require __DIR__ . '/auth.php';

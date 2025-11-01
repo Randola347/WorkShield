@@ -142,11 +142,10 @@ class EmployeeController extends Controller
         $employee->delete();
         return redirect()->route('employees.index')->with('success', 'Empleado eliminado correctamente.');
     }
-public function publicShow($id)
-{
-    $employee = \App\Models\Employee::findOrFail($id);
+    public function publicShow($id)
+    {
+        $employee = Employee::findOrFail($id);
 
-    return view('employees.show', compact('employee'));
-}
-
+        return view('employees.show', compact('employee'));
+    }
 }

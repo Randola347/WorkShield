@@ -124,13 +124,23 @@
     <!-- Sidebar -->
     <div class="sidebar" id="sidebarMenu">
         <h4>WorkShield</h4>
-        <a href="{{ route('employees.index') }}" class="{{ request()->routeIs('employees.*') ? 'active' : '' }}">👥 Empleados</a>
-        <a href="#">📦 Inventario</a>
-        <a href="#">🧾 Reportes</a>
-        <a href="#">⚙️ Configuración</a>
-        <form method="POST" action="{{ route('logout') }}" class="p-3">
+
+        <!-- Enlace Empleados -->
+        <a href="{{ route('employees.index') }}" class="{{ request()->routeIs('employees.*') ? 'active' : '' }}">
+            👥 Empleados
+        </a>
+
+        <!-- Enlace Pagos -->
+        <a href="{{ route('payments.index') }}" class="{{ request()->routeIs('payments.*') ? 'active' : '' }}">
+            💵 Pagos
+        </a>
+
+        <!-- Botón cerrar sesión -->
+        <form method="POST" action="{{ route('logout') }}" class="p-3 mt-3">
             @csrf
-            <button type="submit" class="btn btn-outline-light w-100">Cerrar sesión</button>
+            <button type="submit" class="btn btn-outline-light w-100">
+                <i class="bi bi-box-arrow-right"></i> Cerrar sesión
+            </button>
         </form>
     </div>
 

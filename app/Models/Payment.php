@@ -15,10 +15,9 @@ class Payment extends Model
         'payment_date',
         'method',
         'reference',
-        'created_by',
     ];
 
-    // Un pago pertenece a un empleado
+    // Relación con empleado
     public function employee()
     {
         return $this->belongsTo(Employee::class);
