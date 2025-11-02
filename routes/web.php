@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\RoleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,5 +44,6 @@ Route::get('/public/employees/{id}', [EmployeeController::class, 'publicShow']);
 // 🧾 Módulo de Pagos
 Route::resource('payments', PaymentController::class);
 
+Route::resource('roles', RoleController::class);
 
 require __DIR__ . '/auth.php';

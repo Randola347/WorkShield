@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -119,6 +120,7 @@
         }
     </style>
 </head>
+
 <body>
 
     <!-- Sidebar -->
@@ -133,6 +135,10 @@
         <!-- Enlace Pagos -->
         <a href="{{ route('payments.index') }}" class="{{ request()->routeIs('payments.*') ? 'active' : '' }}">
             💵 Pagos
+        </a>
+
+        <a href="{{ route('roles.index') }}" class="{{ request()->routeIs('roles.*') ? 'active' : '' }}">
+            ⚙️ Roles
         </a>
 
         <!-- Botón cerrar sesión -->
@@ -167,4 +173,5 @@
         });
     </script>
 </body>
+
 </html>
