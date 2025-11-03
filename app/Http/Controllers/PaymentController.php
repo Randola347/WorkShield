@@ -27,15 +27,11 @@ class PaymentController extends Controller
     {
         $validated = $request->validate([
             'employee_id' => 'required|exists:employees,id',
-            'amount' => 'required|numeric|min:0',
+            'amount' => 'required|numeric',
             'payment_date' => 'required|date',
             'method' => 'required|string',
             'reference' => 'nullable|string|max:50',
-        ], [
-            'required' => 'El campo :attribute es obligatorio.',
-            'numeric' => 'El campo :attribute debe ser numérico.',
-            'date' => 'La fecha no es válida.',
-            'exists' => 'El empleado seleccionado no existe.'
+            'created_by' => 'nullable|integer',
         ]);
 
         Payment::create($validated);
@@ -59,19 +55,23 @@ class PaymentController extends Controller
     }
 
     // 💾 Actualizar
-    public function update(Request $request, $id)
-    {
-        $payment = Payment::findOrFail($id);
-        $validated = $request->validate([
-            'employee_id' => 'required|exists:employees,id',
-            'amount' => 'required|numeric|min:0',
-            'payment_date' => 'required|date',
-            'method' => 'required|string',
-            'reference' => 'nullable|string|max:50',
-        ]);
-        $payment->update($validated);
-        return redirect()->route('payments.index')->with('success', 'Pago actualizado correctamente.');
-    }
+   public function update(Request $request, $id)
+{
+    $payment = Payment::findOrFail($id);
+
+    $validated = $request->validate([
+        'employee_id' => 'required|exists:employees,id',
+        'amount' => 'required|numeric',
+        'payment_date' => 'required|date',
+        'method' => 'required|string',
+        'reference' => 'nullable|string|max:50',
+        'created_by' => 'nullable|integer',
+    ]);
+
+    $payment->update($validated);
+
+    return redirect()->route('payments.index')->with('success', 'Pago actualizado correctamente (UNSAFE).');
+}
 
     // 🗑️ Eliminar
     public function destroy($id)

@@ -97,7 +97,7 @@ Cada modulo tiene su funcionabilidad CRUD que devuelve la vista de detalles de u
 * **Controlador:** `app/Http/Controllers/EmployeeController.php`
 
   * Método: `show($id)`
-  * Fragmento codigo linea 80:
+  * Fragmento codigo linea 63:
 
     ```php
     public function show($id)
@@ -208,6 +208,127 @@ Employee::create($validated); // o $employee->update($validated);
 - Realización de acciones en nombre de la víctima (formularios, cambios, borrados).
 - Phishing contextual (formularios falsos en la propia UI) y exfiltración de datos visibles.
 - Combinable con otras vulnerabilidades (IDOR, CSRF) para ataques más graves.
+
+---
+## Vulnerabilidad 3 — Business Logic Flaw: creación insegura de pagos (A04:2021 Insecure Design)
+
+**Nombre:** Business Logic Flaw — Pagos inseguros (reembolsos / atribución arbitraria)  
+**Clasificación OWASP:** A04:2021 — Insecure Design
+
+### i. Descripción técnica
+
+En el flujo de creación/edición de pagos la aplicación confía en datos provenientes del cliente que deberían ser controlados por el servidor. Concretamente, se aceptan montos negativos (`amount < 0`) sin comprobar permisos ni flujo de aprobación (posible reembolso no autorizado), y se permite asignar el campo `created_by` desde el formulario (mass-assignment) lo que permite atribuir una operación a otro usuario (fraude / suplantación interna). Es un fallo de diseño: faltan reglas de negocio y controles de autorización para operaciones financieras. En OWASP 2021 encaja como A04: Insecure Design.
+
+### ii. Ubicación en el código
+
+**Modelo:** `app/Models/Payment.php`
+
+Línea 18 - `$fillable` (incluye `created_by` para la PoC):
+```php
+protected $fillable = [
+    'employee_id',
+    'amount',
+    'payment_date',
+    'method',
+    'reference',
+    'created_by' // <-- agregado para PoC
+];
+```
+
+**Controlador:** `app/Http/Controllers/PaymentController.php`
+
+Línea 26 - `store(Request $request)` (acepta `created_by` y `amount` sin `min:0`):
+```php
+$validated = $request->validate([
+    'employee_id' => 'required|exists:employees,id',
+    'amount' => 'required|numeric',        // permite negativos
+    'payment_date' => 'required|date',
+    'method' => 'required|string',
+    'reference' => 'nullable|string|max:50',
+    'created_by' => 'nullable|integer',    // viene del cliente -> vulnerable
+]);
+
+Payment::create($validated);
+```
+
+Línea 58 - `update(Request $request, $id)` (permite modificar `created_by` y `amount` negativo):
+```php
+$validated = $request->validate([
+    'employee_id' => 'required|exists:employees,id',
+    'amount' => 'required|numeric',        // permite negativos
+    'payment_date' => 'required|date',
+    'method' => 'required|string',
+    'reference' => 'nullable|string|max:50',
+    'created_by' => 'nullable|integer',    // viene del cliente -> vulnerable
+]);
+
+$payment->update($validated);
+```
+
+**Vista:** `resources/views/payments/create.blade.php`
+
+Línea 68 - Formulario de creación: campo `created_by`:
+```php
+<div class="col-md-6">
+    <label for="created_by" class="form-label fw-bold text-danger">ID del creador (solo PoC)</label>
+    <input type="number" name="created_by" id="created_by" class="form-control" placeholder="Ej: 1 (otro usuario)">
+    <div class="form-text">Permite forzar el ID del usuario que crea el pago (PoC).</div>
+</div>
+```
+
+**Vista:** `resources/views/payments/edit.blade.php`
+
+Línea 54 - Formulario de edición: campo `created_by`:
+```php
+<div class="col-md-6">
+    <label for="created_by" class="form-label fw-bold text-danger">ID del creador (solo PoC)</label>
+    <input type="number" name="created_by" id="created_by" class="form-control" value="{{ $payment->created_by }}" placeholder="Ej: 1 (otro usuario)">
+    <div class="form-text">Permite forzar el ID del usuario que crea el pago (PoC).</div>
+</div>
+```
+
+### iii. Pasos detallados para explotar la vulnerabilidad (PoC)
+
+**Precondición:** servidor en ejecución en `http://127.0.0.1:8000` y base de datos importada. 
+
+1. Loguearse.
+
+4. Ir a **Registrar nuevo pago**:
+```
+http://127.0.0.1:8000/payments/create
+```
+
+5. En el formulario introducir:
+   - **Empleado**: id válido
+   - **Monto**: `-5000` (monto negativo)
+   - **Payment date**: fecha actual
+   - **Method**: `Cheque`
+   - **Reference**: `POC-BUSINESS-FLAW`
+   - **Created_by**: `1` (Solo existe un usuario pero mediante la bd en xampp puede crear otro)
+
+6. Enviar formulario.
+
+7. Verificar que se haya hecho el pago con el monto negativo y 
+
+### IMG. Evidencia
+![Insecure Design](./images/captura3.png)
+
+### v. Impacto
+
+- **Fraude financiero:** creación de reembolsos no autorizados sin flujo de aprobación.
+- **Suplantación interna:** operaciones atribuidas a otros usuarios (ej. administradores), comprometiendo la trazabilidad y auditoría.
+- **Corrupción de balances** y conciliaciones contables que afectan la integridad financiera del sistema.
+- Base para fraudes o manipulación contable posterior, permitiendo escalar el ataque.
+- Combinable con otras vulnerabilidades (Broken Access Control, XSS) para ataques más complejos.
+
+---
+
+### 5. Impacto
+
+- **Fraude financiero:** creación de reembolsos no autorizados.
+- **Suplantación interna:** operaciones atribuidas a otros usuarios (ej. administradores).
+- **Corrupción de balances** y conciliaciones contables.
+- Base para fraudes o manipulación contable posterior.
 
 ## 4. Contribuciones del equipo
 

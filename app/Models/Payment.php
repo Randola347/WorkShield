@@ -15,6 +15,7 @@ class Payment extends Model
         'payment_date',
         'method',
         'reference',
+        'created_by', // ⚠️ ← agregado para PoC (permite asignación masiva)
     ];
 
     // Relación con empleado
