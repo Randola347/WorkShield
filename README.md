@@ -135,6 +135,79 @@ Cada modulo tiene su funcionabilidad CRUD que devuelve la vista de detalles de u
 * Base para ataques posteriores (ingeniería social, fraudes, etc.).
 
 ---
+## Vulnerabilidad 2 — Stored XSS (Cross-Site Scripting almacenado)
+
+**Nombre:** Stored XSS (Cross-Site Scripting almacenado)  
+**Clasificación OWASP:** A03:2021 — Injection (Cross-Site Scripting)
+
+### i. Descripción técnica
+
+El campo `notes` del modelo `Employee` acepta y almacena texto ingresado por el usuario sin sanitización. La vista de detalle del empleado (`employees.show`) renderiza ese contenido sin escapar, usando `{!! $employee->notes !!}`. Un atacante puede inyectar código JavaScript (por ejemplo `<script>...</script>`) en `notes`. El payload queda persistido en la base de datos y se ejecuta en el navegador de cualquier usuario que visite la vista vulnerable, permitiendo robo de cookies, ejecución de acciones en nombre del usuario, exfiltración de datos, phishing contextual, etc. Esto va de la mano con la Vulnerabilidad de Broken Access Control Anterior.
+
+### ii. Ubicación en el código
+
+**Vista vulnerable:** `resources/views/employees/show.blade.php`
+
+Fragmento vulnerable, linea 46:
+```php
+<!-- vulnerable: render sin escapar -->
+<div class="form-control bg-light">{!! $employee->notes ?? 'Sin notas' !!}</div>
+```
+
+**Controlador (almacenamiento sin sanitizar):** `app/Http/Controllers/EmployeeController.php`
+
+Métodos: `store(Request $request)` y `update(Request $request, $id)`
+
+Fragmento  (almacenando `notes` sin sanitizar), linea 91:
+```php
+$validated = $request->validate([
+    // ... otros campos ...
+    'notes' => 'nullable|string|max:2000',
+]);
+```
+Linea 95:
+```php
+// Vulnerable: guardado sin sanitizar
+Employee::create($validated); // o $employee->update($validated);
+```
+
+### iii. Pasos detallados para explotar la vulnerabilidad (PoC)
+
+**Precondición:** servidor en ejecución en `http://127.0.0.1:8000`.
+
+1. Entrar al login y ya sea con las rutas sin autenticacion o iniciando sesion.
+
+2. Ir a crear o editar empleado:
+```
+   http://127.0.0.1:8000/employees/create
+   # o
+   http://127.0.0.1:8000/employees/{id}/edit
+```
+
+3. En el campo **Notas**, insertar un payload de prueba:
+```html
+   <script>alert('XSS PoC - WorkShield')</script>
+```
+
+4. Guardar el empleado.
+
+5. Abrir la vista de detalle del empleado:
+```
+   http://127.0.0.1:8000/employees/{id}
+```
+
+6. Verificar la ejecución del payload.
+
+### IMG. Evidencia
+![Stored XSS alert](./images/captura2.png)
+
+### v. Impacto
+
+- Ejecución de JavaScript en el contexto del sitio para cualquier usuario que vea la ficha (persistente).
+- Robo de sesiones si las cookies no usan `HttpOnly`.
+- Realización de acciones en nombre de la víctima (formularios, cambios, borrados).
+- Phishing contextual (formularios falsos en la propia UI) y exfiltración de datos visibles.
+- Combinable con otras vulnerabilidades (IDOR, CSRF) para ataques más graves.
 
 ## 4. Contribuciones del equipo
 

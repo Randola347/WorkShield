@@ -43,7 +43,7 @@
 
             <div class="col-md-6">
                 <label class="fw-bold">Notas:</label>
-                <div class="form-control bg-light">{{ $employee->notes ?? 'Sin notas' }}</div>
+                <div class="form-control bg-light">{!! $employee->notes ?? 'Sin notas' !!}</div>
             </div>
         </div>
 

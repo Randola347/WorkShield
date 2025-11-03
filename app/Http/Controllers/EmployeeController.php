@@ -33,45 +33,28 @@ class EmployeeController extends Controller
     // 💾 Guardar nuevo empleado
     public function store(Request $request)
     {
-        $request->merge([
-            'salary' => preg_replace('/[^\d.]/', '', $request->salary),
-        ]);
-
-        $attributes = [
-            'first_name'    => 'nombre',
-            'last_name'     => 'apellidos',
-            'email'         => 'correo electrónico',
-            'phone'         => 'teléfono',
-            'area'          => 'área',
-            'position'      => 'puesto',
-            'hire_date'     => 'fecha de contratación',
-            'salary'        => 'salario',
-            'bank_account'  => 'cuenta bancaria',
-            'notes'         => 'notas',
-        ];
-
+        // Validaciones mínimas para otros campos (puedes mantener las tuyas)
         $validated = $request->validate([
-            'first_name'    => 'required|regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/',
-            'last_name'     => 'required|regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/',
-            'email'         => 'required|email|unique:employees,email',
-            'phone'         => 'required|regex:/^[0-9+\s]+$/',
-            'area'          => 'required|regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/',
-            'position'      => 'required|regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/',
-            'hire_date'     => 'required|date',
-            'salary' => 'required|numeric|min:0|max:99999999.99',
-            'bank_account'  => 'required|regex:/^[A-Za-z0-9]+$/|min:10',
-            'notes'         => 'nullable|string',
+            'first_name' => 'required|string|max:100',
+            'last_name'  => 'required|string|max:100',
+            'email'      => 'required|email|unique:employees,email',
+            'phone'      => 'nullable|string|max:30',
+            'area'       => 'nullable|string|max:100',
+            'position'   => 'nullable|string|max:100',
+            'hire_date'  => 'nullable|date',
+            'salary'     => 'nullable|numeric',
+            'bank_account' => 'nullable|string|max:50',
+            // notes marcado como nullable|string (no sanitizamos)
+            'notes'      => 'nullable|string|max:2000',
         ], [
             'required' => 'El campo :attribute es obligatorio.',
-            'email' => 'El campo :attribute no es válido.',
-            'regex' => 'El campo :attribute contiene caracteres no válidos.',
-            'numeric' => 'El campo :attribute debe ser un número.',
-            'min' => 'El campo :attribute debe tener al menos :min caracteres.',
-            'unique' => 'El :attribute ya está registrado.',
-            'date' => 'El campo :attribute debe ser una fecha válida.',
-        ], $attributes);
+            'email' => 'El :attribute debe ser un correo válido.',
+            'numeric' => 'El campo :attribute debe ser numérico.',
+            'unique' => 'El :attribute ya está en uso.',
+        ]);
 
-        Employee::create($validated);
+        // Vulnerable: guardamos notes tal cual (no strip_tags / no purify)
+        $employee = Employee::create($validated);
 
         return redirect()->route('employees.index')->with('success', 'Empleado registrado correctamente.');
     }
@@ -90,50 +73,28 @@ class EmployeeController extends Controller
     }
 
     // 💾 Actualizar
-    public function update(Request $request, Employee $employee)
+    public function update(Request $request, $id)
     {
-        $request->merge([
-            'salary' => preg_replace('/[^\d.]/', '', $request->salary),
-        ]);
-
-        $attributes = [
-            'first_name'    => 'nombre',
-            'last_name'     => 'apellidos',
-            'email'         => 'correo electrónico',
-            'phone'         => 'teléfono',
-            'area'          => 'área',
-            'position'      => 'puesto',
-            'hire_date'     => 'fecha de contratación',
-            'salary'        => 'salario',
-            'bank_account'  => 'cuenta bancaria',
-            'notes'         => 'notas',
-        ];
+        $employee = Employee::findOrFail($id);
 
         $validated = $request->validate([
-            'first_name'    => 'required|regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/',
-            'last_name'     => 'required|regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/',
-            'email'         => 'required|email|unique:employees,email,' . $employee->id,
-            'phone'         => 'required|regex:/^[0-9+\s]+$/',
-            'area'          => 'required|regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/',
-            'position'      => 'required|regex:/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/',
-            'hire_date'     => 'required|date',
-            'salary' => 'required|numeric|min:0|max:99999999.99',
+            'first_name' => 'required|string|max:100',
+            'last_name'  => 'required|string|max:100',
+            'email'      => 'required|email|unique:employees,email,' . $employee->id,
+            'phone'      => 'nullable|string|max:30',
+            'area'       => 'nullable|string|max:100',
+            'position'   => 'nullable|string|max:100',
+            'hire_date'  => 'nullable|date',
+            'salary'     => 'nullable|numeric',
+            'bank_account' => 'nullable|string|max:50',
+            // notes no sanitizado
+            'notes'      => 'nullable|string|max:2000',
+        ]);
 
-            'bank_account'  => 'required|regex:/^[A-Za-z0-9]+$/|min:10',
-            'notes'         => 'nullable|string',
-        ], [
-            'required' => 'El campo :attribute es obligatorio.',
-            'email' => 'El campo :attribute no es válido.',
-            'regex' => 'El campo :attribute contiene caracteres no válidos.',
-            'numeric' => 'El campo :attribute debe ser un número.',
-            'min' => 'El campo :attribute debe tener al menos :min caracteres.',
-            'unique' => 'El :attribute ya está registrado.',
-            'date' => 'El campo :attribute debe ser una fecha válida.',
-        ], $attributes);
-
+        // Vulnerable: actualizamos notes tal cual
         $employee->update($validated);
 
-        return redirect()->route('employees.index')->with('success', 'Empleado actualizado correctamente.');
+        return redirect()->route('employees.show', $employee)->with('success', 'Empleado actualizado correctamente.');
     }
 
     // 🗑️ Eliminar
@@ -142,5 +103,4 @@ class EmployeeController extends Controller
         $employee->delete();
         return redirect()->route('employees.index')->with('success', 'Empleado eliminado correctamente.');
     }
-
 }
