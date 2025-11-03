@@ -16,8 +16,6 @@ use App\Http\Controllers\RoleController;
 Route::get('/', function () {
     return redirect()->route('dashboard');
 });
-
-
 // Dashboard principal
 Route::get('/dashboard', function () {
     return view('dashboard');
@@ -30,18 +28,14 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// ✅ Módulo de empleados (CRUD protegido por login)
-Route::middleware(['auth'])->group(function () {
-    Route::resource('employees', EmployeeController::class);
-});
+
 
 Route::get('/', function () {
     return redirect('/login');
 });
 
-Route::get('/public/employees/{id}', [EmployeeController::class, 'publicShow']);
+Route::resource('employees', EmployeeController::class);
 
-// 🧾 Módulo de Pagos
 Route::resource('payments', PaymentController::class);
 
 Route::resource('roles', RoleController::class);

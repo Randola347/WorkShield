@@ -32,13 +32,12 @@ Aplicación MVC (Models, Views, Controllers) típica de Laravel:
 - Composer >= 2.0 
 - MySQL >= 8.0   
 - Git
-
+- Xampp 8.2.12 / PHP 8.2.12
 ### Pasos detallados de instalación
-1. Clonar el repositorio:
+1. Tener la terminal en:
    ```bash
-   git clone https://github.com/Randola347/WorkShield.git
-   cd workshield
-````
+   \WorkShield>
+    ````
 
 2. Instalar dependencias PHP:
 
@@ -61,13 +60,14 @@ Aplicación MVC (Models, Views, Controllers) típica de Laravel:
    DB_USERNAME=root
    DB_PASSWORD=
    ```
-5. Ejecutar migraciones y seeders (opcional: use el seeder de laboratorio si existe):
+5. Importar base de datos:
+   En Xampp tener corriendo Apache y MySQL, entrar en admin de MySQL e importar la bd llamada workshield_db.sql que se encuentra en la carpeta del proyecto.
+6. Ejecutar migraciones:
 
    ```bash
    php artisan migrate
-   php artisan db:seed --class=CostaRicaEmployeeSeeder
    ```
-6. Iniciar servidor local:
+7. Iniciar servidor local:
 
    ```bash
    php artisan serve
@@ -76,9 +76,6 @@ Aplicación MVC (Models, Views, Controllers) típica de Laravel:
    Abre: `http://127.0.0.1:8000`
 
 ### Configuración de base de datos
-
-* Las migraciones crean las tablas principales: `users`, `employees`, `roles`, `payments`, `audits`.
-
 ---
 
 ## 3. Catálogo de vulnerabilidades
@@ -90,50 +87,45 @@ Aplicación MVC (Models, Views, Controllers) típica de Laravel:
 
 #### i. Descripción técnica
 
-Se añadió un endpoint público que devuelve la vista de detalles de un empleado sin aplicar autenticación ni verificación de permisos. Cualquiera que conozca o pruebe diferentes valores del parámetro `{id}` puede enumerar y visualizar registros de empleados (incluyendo datos sensibles como salario y cuenta bancaria). Esto constituye **Broken Access Control** porque el acceso a recursos no está restringido por ownership o roles.
+Cada modulo tiene su funcionabilidad CRUD que devuelve la vista de detalles de un empleado, pagos o roles no aplicado autenticación ni verificación de permisos. Cualquiera que conozca o pruebe diferentes valores del parámetro `{id}` puede enumerar y visualizar registros de empleados etc (incluyendo datos sensibles como salario y cuenta bancaria). Esto esta dentro de  **Broken Access Control** porque el acceso a recursos no está restringido por el login o roles.
 
 #### ii. Ubicación en el código
 
 * **Ruta vulnerable:** `routes/web.php`
   * Archivo: `routes/web.php`
-  * Linea 40: Route::get('/public/employees/{id}', [EmployeeController::class, 'publicShow']);
+  * Linea 37: Route::resource('employees', EmployeeController::class);
 * **Controlador:** `app/Http/Controllers/EmployeeController.php`
 
-  * Método: `publicShow($id)`
-  * Fragmento relevante (aprox. ubicación dentro del archivo):
+  * Método: `show($id)`
+  * Fragmento codigo linea 80:
 
     ```php
-    public function publicShow($id)
-{
-    $employee = \App\Models\Employee::findOrFail($id);
-
-    return view('employees.show', compact('employee'));
-}
-
+    public function show($id)
+    {
+        $employee = Employee::findOrFail($id);
+        return view('employees.show', compact('employee'));
+    }
     ```
   
 #### Pasos detallados para explotar la vulnerabilidad
 
-**Precondición:** servidor en ejecución en `http://127.0.0.1:8000`.
+**Precondición:** servidor en ejecución en `http://127.0.0.1:8000` y base de datos importada.
 
-1. Abre el navegador (o usa `curl`).
+1. Abrir el navegador.
 2. Abrir la URL del endpoint con un id válido:
 
    ```
-   http://127.0.0.1:8000/public/employees/6
+   http://127.0.0.1:8000/employees/6
    ```
-3. Si la página muestra la ficha del empleado sin pedir login → vulnerabilidad reproducida.
-4. Cambia el `{id}` por otros valores para enumerar registros:
+3. Cambiar el `{id}` por otros valores para enumerar registros:
 
    ```
-   http://127.0.0.1:8000/public/employees/2
-   http://127.0.0.1:8000/public/employees/3
+   http://127.0.0.1:8000/employees/2
+   http://127.0.0.1:8000/employees/3
    ```
 
 
-#### iv. Evidencia (qué capturar)
-
-* Captura de pantalla de `/public/employees/6` mostrando campos: nombre, correo, teléfono, salario, cuenta bancaria, notas.
+#### IMG. Evidencia
 ![IDOR](./images/captura1.png)
 
 #### v. Impacto
