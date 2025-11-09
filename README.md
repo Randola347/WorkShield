@@ -421,6 +421,73 @@ http://127.0.0.1:8000/register
 - **Riesgo de escalación y abuso:** cuentas fraudulentas pueden usarse para probar vulnerabilidades, subir contenido malicioso o manipular datos.
 
 ---
+
+## Vulnerabilidad 5 — Security Logging and Monitoring Failures: exposición de logs y errores detallados (A09:2021)
+
+**Nombre:** Security Logging and Monitoring Failures — Exposición de logs y mensajes de error detallados  
+**Clasificación OWASP:** A09:2021 — Security Logging and Monitoring Failures
+
+### i. Descripción técnica
+
+El sistema WorkShield mantiene habilitado el modo de depuración (`APP_DEBUG=true`) y expone una ruta pública que permite visualizar directamente los registros (`laravel.log`) sin autenticación. Esta combinación representa una falla de configuración y monitoreo, ya que permite a un atacante externo acceder a información sensible contenida en los logs, como rutas internas, nombres de clases, consultas SQL, tokens, correos o incluso fragmentos de stack trace. Este tipo de vulnerabilidad facilita el reconocimiento del sistema y la planificación de ataques posteriores (p. ej. SQL Injection, LFI, escalada de privilegios, etc.). En OWASP 2021 se clasifica como A09 — Security Logging and Monitoring Failures.
+
+### ii. Ubicación en el código
+
+**Archivo de configuración:** `.env`
+
+Línea 4 — habilita modo debug en entorno productivo:
+```
+APP_DEBUG=true
+```
+
+**Archivo de rutas:** `routes/web.php`
+
+Línea 38 — ruta añadida para PoC:
+```php
+Route::get('/lab/logs/raw', function () {
+    $log = @file_get_contents(storage_path('logs/laravel.log')) ?: 'No hay registros disponibles';
+    return response("<pre>".e($log)."</pre>");
+});
+```
+
+### iii. Pasos detallados para explotar la vulnerabilidad (PoC)
+
+**Precondición:** Servidor en ejecución con `APP_DEBUG=true` y la ruta `/lab/logs/raw` habilitada.
+
+1. Acceder a la ruta vulnerable:
+```
+http://127.0.0.1:8000/logs
+```
+
+2. Observar que se muestra el contenido completo del archivo `laravel.log`, incluyendo información de errores internos, rutas, nombres de controladores y posibles trazas de SQL.
+
+3. Generar un error intencional en la aplicación (en mi caso cambie el puerto de la base de datos en .env linea 25):
+```bash
+##anteriormente en 3306
+DB_PORT=3307
+```
+
+4. Recargar la pagina y una vez que aparezcan los errores como se ve aqui: 
+
+![Security Logging Failures - Errores](./images/captura8.png)
+
+Volver a cambiar el puerto.
+
+5. Revisar nuevamente la ruta `/logs` y verificar que los errores se registraron y son visibles públicamente.
+
+
+### IMG. Evidencia
+![Security Logging Failures - Logs expuestos](./images/captura6.png)
+![Security Logging Failures - Logs expuestos](./images/captura7.png)
+### v. Impacto
+
+- **Exposición de información sensible:** rutas, consultas SQL, excepciones, ubicaciones de archivos, versiones del framework y nombres de clases internas.
+- **Facilita reconocimiento del sistema:** un atacante puede mapear endpoints y vulnerabilidades activas.
+- **Pérdida de confidencialidad:** logs pueden contener datos personales, tokens o credenciales.
+- **Ausencia de monitoreo:** no existen alertas ante intentos de explotación o errores críticos, impidiendo detectar ataques en tiempo real.
+- **Riesgo de cadena:** combinada con vulnerabilidades como A01 (Broken Access Control) o A03 (Injection), acelera el compromiso completo del sistema.
+
+---
 ## 4. Contribuciones del equipo
 
 ### Distribución de tareas
