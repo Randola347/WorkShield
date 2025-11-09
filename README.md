@@ -313,7 +313,7 @@ http://127.0.0.1:8000/payments/create
 ### IMG. Evidencia
 ![Insecure Design](./images/captura3.png)
 
-### v. Impacto
+### 5. Impacto
 
 - **Fraude financiero:** creación de reembolsos no autorizados sin flujo de aprobación.
 - **Suplantación interna:** operaciones atribuidas a otros usuarios (ej. administradores), comprometiendo la trazabilidad y auditoría.
@@ -323,13 +323,104 @@ http://127.0.0.1:8000/payments/create
 
 ---
 
-### 5. Impacto
+## Vulnerabilidad 4 — Security Misconfiguration: registro público en panel administrativo (A05:2021 Security Misconfiguration)
 
-- **Fraude financiero:** creación de reembolsos no autorizados.
-- **Suplantación interna:** operaciones atribuidas a otros usuarios (ej. administradores).
-- **Corrupción de balances** y conciliaciones contables.
-- Base para fraudes o manipulación contable posterior.
+**Nombre:** Security Misconfiguration — Registro público expuesto en panel administrativo  
+**Clasificación OWASP:** A05:2021 — Security Misconfiguration
 
+### i. Descripción técnica
+
+El panel administrativo WorkShield expone un endpoint de registro público (`/register`) y muestra un enlace visible en la vista de login que permite a cualquier visitante crear cuentas dentro del sistema administrativo. Esto es una mala configuración del entorno de autenticación: la funcionalidad de registro no debería estar disponible en una aplicación sólo administrativa o, si existe, debe estar restringida a administradores y/o protegida por controles adicionales (invites, tokens, approval workflow). La exposición de rutas y vistas innecesarias incrementa la superficie de ataque, facilita creación masiva de cuentas (bots), prueba de credenciales (credential stuffing/brute force) y puede permitir acceso no autorizado a recursos internos. En OWASP 2021 esto encaja en A05: Security Misconfiguration.
+
+### ii. Ubicación en el código
+
+**Vista:** `resources/views/auth/login.blade.php`
+
+Línea final del formulario — enlace de registro público linea 74:
+```php
+<button type="submit" class="btn btn-primary">Ingresar</button>
+            <div class="text-center mt-3">
+                <p class="text-muted mb-0">¿No tienes una cuenta?</p>
+                <a href="{{ route('register') }}" class="text-decoration-none text-blue fw-bold">
+                    Crear una nueva cuenta
+                </a>
+            </div>
+```
+
+**Rutas:** `routes/web.php` linea 14:
+```php
+Route::middleware('guest')->group(function () {
+    Route::get('register', [RegisteredUserController::class, 'create'])
+        ->name('register');
+
+    Route::post('register', [RegisteredUserController::class, 'store']);
+```
+
+**Controlador (PoC):** `app/Http/Controllers/Auth/RegisterController.php` Linea 30:
+```php
+/public function store(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ]);
+
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+        ]);
+
+        event(new Registered($user));
+
+        Auth::login($user);
+
+        return redirect(route('dashboard', absolute: false));
+    }
+```
+
+### iii. Pasos detallados para explotar la vulnerabilidad (PoC)
+
+**Precondición:** servidor en ejecución en `http://127.0.0.1:8000`.
+
+1. Abrir navegador y acceder a la página de login:
+
+```bash
+http://127.0.0.1:8000/login
+```
+
+2. Verás el enlace **"Crear una nueva cuenta"** en la vista de login. Hacer clic en él.
+
+3. Se redirigira a la vista de registro:
+```bash
+http://127.0.0.1:8000/register
+```
+
+4. Completar el formulario con datos arbitrarios:
+   - **name:** Nombre cualquiera
+   - **email:** correo cualquiera (ej. `prueba@workshield.cr`)
+   - **password:** una contraseña y la confirmación
+
+5. Enviar formulario.
+
+6. El sistema crea la cuenta y autentica la nueva sesión del atacante; ahora el atacante puede intentar acceder a rutas administrativas si no hay controles de autorización adicionales.
+
+
+### IMG. Evidencia
+
+![Security Misconfiguration - Login con enlace de registro](./images/captura4.png)
+
+![Security Misconfiguration - Formulario de registro](./images/captura5.png)
+
+### v. Impacto
+
+- **Creación de cuentas no autorizadas:** cualquier visitante puede crear usuarios en el sistema administrativo.
+- **Aumento de la superficie de ataque:** facilita ataques automatizados (bots), credential stuffing y brute force.
+- **Acceso no deseado a áreas administrativas:** si no existen controles de autorización adicionales, cuentas creadas podrían intentar acceder a recursos internos.
+- **Riesgo de escalación y abuso:** cuentas fraudulentas pueden usarse para probar vulnerabilidades, subir contenido malicioso o manipular datos.
+
+---
 ## 4. Contribuciones del equipo
 
 ### Distribución de tareas
