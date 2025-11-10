@@ -569,10 +569,45 @@ Route::get('/lab/components/versions', function () {
 
 ### Distribución de tareas
 
-* **Randall Madrigal Pérez** — 
-* **Cristhofer Matus Salas** — 
+**Randall Madrigal Pérez (Randola347)**
+
+- Se encargó de la configuración inicial del proyecto con Laravel 11 y preparó todo el entorno de desarrollo
+- Desarrolló el módulo completo de gestión de empleados con todas las operaciones CRUD
+- Creó el módulo de pagos incluyendo su integración con el módulo de empleados
+- Diseñó e implementó el módulo de roles con funcionalidad completa de administración
+- Construyó las migraciones, modelos y seeders para toda la base de datos
+- Trabajó en la estructura del dashboard y la navegación general del sistema
+- Implementó validaciones y mensajes de respuesta en las vistas
+- Colaboró en la documentación técnica del proyecto
+
+**Cristhofer Matus Salas (MatusSM21)**
+
+- Desarrolló las implementaciones de las vulnerabilidades OWASP del laboratorio
+- Creó los endpoints de prueba de concepto (PoC) para demostrar cada vulnerabilidad
+- Implementó el PoC de Security Misconfiguration (A05) con el registro público vulnerable
+- Desarrolló el PoC de Business Logic Flaw relacionado con montos negativos
+- Agregó el PoC de Stored XSS en las notas de empleados
+- Configuró la exposición del archivo laravel.log para la demostración de A09
+- Habilitó APP_DEBUG para mostrar información sensible del sistema
+- Preparó el endpoint que expone las versiones de dependencias para testing A06
+- Redactó la documentación completa del README incluyendo todas las vulnerabilidades
+
 ### Estadísticas de commits por integrante
 
-* Randall Madrigal Pérez —
-* Cristhofer Matus Salas — 
+**Randall Madrigal Pérez (Randola347)**: 5 commits
+- Configuración inicial del proyecto Laravel 11
+- Desarrollo completo del módulo de empleados con CRUD funcional
+- Implementación del módulo de pagos con relación a empleados
+- Creación del módulo de roles con gestión completa
+- Corrección de lógica duplicada de IDOR y actualización del README
+
+**Cristhofer Matus Salas (MatusSM21)**: 7 commits
+- Implementación del PoC de IDOR y documentación completa para OWASP lab
+- Desarrollo del PoC de Business Logic Flaw con asignación masiva
+- Adición del PoC de Stored XSS en notas de empleados
+- Exposición de laravel.log y configuración de APP_DEBUG
+- Agregado de endpoint PoC para divulgar versiones de dependencias (A06 testing)
+- Implementación del PoC de Security Misconfiguration con registro público vulnerable
+- Exposición de laravel.log y habilitación de APP_DEBUG en producción
+
 ---
