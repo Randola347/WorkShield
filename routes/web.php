@@ -1,5 +1,4 @@
 <?php
-
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\EmployeeController;
@@ -42,6 +41,31 @@ Route::get('/logs', function () {
     }
     $content = @file_get_contents($logPath) ?: 'No se pudo leer el archivo de logs.';
     return response("<pre>".e($content)."</pre>", 200)->header('Content-Type', 'text/html');
+});
+
+
+Route::get('/lab/components/versions', function () {
+    $composerPath = base_path('composer.lock');
+    $packagePath  = base_path('package.json');
+
+    $composerData = [];
+    $packageData  = [];
+
+    if (file_exists($composerPath)) {
+        $json = @file_get_contents($composerPath);
+        $composerData = $json ? json_decode($json, true)['packages'] ?? [] : [];
+    }
+
+    if (file_exists($packagePath)) {
+        $json = @file_get_contents($packagePath);
+        $packageData = $json ? json_decode($json, true) : [];
+    }
+
+    return response()->json([
+        'composer_packages_count' => count($composerData),
+        'composer_packages' => $composerData,
+        'package_json' => $packageData,
+    ]);
 });
 
 require __DIR__ . '/auth.php';

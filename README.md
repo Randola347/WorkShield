@@ -487,6 +487,83 @@ Volver a cambiar el puerto.
 - **Ausencia de monitoreo:** no existen alertas ante intentos de explotación o errores críticos, impidiendo detectar ataques en tiempo real.
 - **Riesgo de cadena:** combinada con vulnerabilidades como A01 (Broken Access Control) o A03 (Injection), acelera el compromiso completo del sistema.
 
+## Vulnerabilidad 6 — Security Misconfiguration: exposición de versiones de componentes (A05:2021 Security Misconfiguration)
+
+**Nombre:** Security Misconfiguration — Exposición pública de versiones de componentes y dependencias  
+**Clasificación OWASP:** A05:2021 — Security Misconfiguration
+
+### i. Descripción técnica
+
+Se implementó un endpoint público en `/lab/components/versions` que expone información completa sobre las dependencias instaladas en la aplicación. Este endpoint lee directamente los archivos `composer.lock` y `package.json`, revelando todas las versiones exactas de los paquetes PHP y Node.js utilizados en el proyecto. No existe ningún tipo de autenticación o restricción de acceso, lo que significa que cualquier persona puede acceder a esta información simplemente visitando la URL. Esta configuración representa un problema de seguridad significativo porque proporciona a posibles atacantes un inventario detallado de los componentes del sistema, facilitando la búsqueda de vulnerabilidades conocidas en versiones específicas. Este tipo de exposición innecesaria de información técnica se considera una mala configuración de seguridad según OWASP A05:2021.
+
+### ii. Ubicación en el código
+
+**Ruta vulnerable:** routes/web.php
+
+Línea 47 — endpoint que retorna información de versiones:
+```php
+Route::get('/lab/components/versions', function () {
+    $composerPath = base_path('composer.lock');
+    $packagePath  = base_path('package.json');
+
+    $composerData = [];
+    $packageData  = [];
+
+    if (file_exists($composerPath)) {
+        $json = @file_get_contents($composerPath);
+        $composerData = $json ? json_decode($json, true)['packages'] ?? [] : [];
+    }
+
+    if (file_exists($packagePath)) {
+        $json = @file_get_contents($packagePath);
+        $packageData = $json ? json_decode($json, true) : [];
+    }
+
+    return response()->json([
+        'composer_packages_count' => count($composerData),
+        'composer_packages' => $composerData,
+        'package_json' => $packageData,
+    ]);
+});
+```
+
+### iii. Pasos detallados para explotar la vulnerabilidad (PoC)
+
+**Precondición:** servidor en ejecución en http://127.0.0.1:8000.
+
+1. Abrir el navegador y acceder directamente a la ruta:
+```
+   http://127.0.0.1:8000/lab/components/versions
+   O
+   http://127.0.0.1:8085/lab/components/versions
+```
+
+2. La aplicación responde con un JSON que incluye tres elementos principales:
+   - Un contador con el número total de paquetes de Composer
+   - Un array detallado de todos los paquetes PHP con sus versiones exactas
+   - El contenido completo del package.json con las dependencias de Node.js
+
+3. Con esta información, se pueden consultar bases de datos públicas de vulnerabilidades como CVE Details, Snyk o GitHub Advisory Database para identificar si alguna de las versiones tiene problemas de seguridad documentados.
+
+4. Esta información también revela qué librerías se están usando para autenticación, manejo de base de datos, procesamiento de archivos, etc., lo cual ayuda a planificar ataques más específicos.
+
+5. La combinación de esta información con otras vulnerabilidades encontradas en el sistema permite desarrollar exploits mucho más efectivos y dirigidos.
+
+### IMG. Evidencia
+![Security Misconfiguration - Exposición de versiones](./images/captura9.png)
+![Security Misconfiguration - Exposición de versiones](./images/captura10.png)
+
+### v. Impacto
+
+- **Facilita el reconocimiento del sistema:** un atacante obtiene de inmediato toda la información sobre la tecnología utilizada sin necesidad de escaneos o pruebas adicionales.
+- **Permite identificar componentes vulnerables:** con las versiones exactas, se pueden buscar CVEs específicos y exploits públicos disponibles.
+- **Acelera el proceso de ataque:** elimina completamente la fase de reconocimiento, permitiendo pasar directamente a la explotación.
+- **Expone la arquitectura interna:** revela qué librerías se usan para funciones críticas como autenticación, cifrado y validación de datos.
+- **Aumenta la superficie de ataque:** cada componente identificado representa un posible vector de entrada al sistema.
+- **Potencia ataques combinados:** esta información se puede usar junto con otras vulnerabilidades (IDOR, XSS, SQL Injection) para crear cadenas de explotación más sofisticadas.
+- **Viola principios de seguridad básicos:** la información técnica interna no debería estar accesible públicamente bajo ninguna circunstancia.
+
+---
 ---
 ## 4. Contribuciones del equipo
 
